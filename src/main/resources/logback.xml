@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- scan表示自动扫描logback配制文件改动，频率60秒 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="fasle">
+
+    <!-- 属性定义property 使用方法${name} -->
+    <!--定义日志文件的存储地址 生产环境勿在 LogBack 的配置中使用相对路径 -->
+    <!--<property name="LOG_HOME" value="/home/logs/epaas" />-->
+    <property name="LOG_HOME" value="./logs" />
+
+    <!-- ===================================控制台输出appender========================================= -->
+
+    <!-- appender 控制台输出使用ch.qos.logback.core.ConsoleAppender" -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- 也可使用layout -->
+        <!-- <layout class="ch.qos.logback.classic.PatternLayout"> <pattern>%d{yyyy-MM-dd HH:mm:ss:SSS}[%p]: %m%n</pattern> </layout> -->
+        <!-- encoder 默认配置为PatternLayoutEncoder -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss:SSS}[%p] [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <!-- 过滤级别 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
+    </appender>
+
+    <!-- ===================================文件输出appender========================================= -->
+
+    <!-- 全部日志文件记录,滚动记录日志 -->
+    <appender name="DATA" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 输出文件 -->
+        <File>${LOG_HOME}//myway_data.log</File>
+        <append>true</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <!-- 文件重命名滚动(采用时间和文件大小双策略) -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名 -->
+            <FileNamePattern>${LOG_HOME}//data_%d-%i.log</FileNamePattern>
+            <!--日志文件保留个数 -->
+            <MaxHistory>30</MaxHistory>
+            <!-- 文件最大滚动限制 -->
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+    </appender>
+
+    <!-- 错误日志文件记录,滚动记录日志 -->
+    <appender name="DATA_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 输出文件 -->
+        <File>${LOG_HOME}//myway_data_error.log</File>
+        <append>true</append>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <!-- 文件重命名滚动(采用时间和文件大小双策略) -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!--日志文件输出的文件名 -->
+            <FileNamePattern>${LOG_HOME}//data_error_%d-%i.log</FileNamePattern>
+            <!--日志文件保留个数 -->
+            <MaxHistory>30</MaxHistory>
+            <!-- 文件最大滚动限制 -->
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <!-- 过滤掉低于ERROR级别的日志 -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+    </appender>
+
+    <!-- root 默认日志配置 -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="DATA" />
+        <appender-ref ref="DATA_ERROR" />
+    </root>
+
+    <!-- logger 配制 name为需要输出日志的包名 -->
+    <logger name="com.myway" level="DEBUG" />
+</configuration>
