@@ -46,8 +46,8 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
             }
             log.info(new Date().toString());
             Jedis jedis = redisUtil.getJedis();
-            String s = jedis.get(uri);
-            if (s == null || s.length() == 0) {
+            String content = jedis.get(uri);
+            if (content == null || content.length() == 0) {
                 try {
                     URL url = new URL("http://119.29.188.224:8080" + uri);
                     log.info(url.toString());
@@ -66,9 +66,11 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
                         while ((l = bufferedReader.readLine()) != null) {
                             bs.append(l).append("\n");
                         }
-                        s = bs.toString();
+                        content = bs.toString();
                     }
-                    jedis.set(uri, s);
+                    if (content != null && !content.isEmpty()) {
+                        jedis.set(uri, content);
+                    }
                     connection.disconnect();
                 } catch (Exception e) {
                     log.error("", e);
@@ -77,7 +79,7 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
             }
             jedis.close();
             FullHttpResponse response = new DefaultFullHttpResponse(
-                    HTTP_1_1, OK, Unpooled.wrappedBuffer(s != null ? s
+                    HTTP_1_1, OK, Unpooled.wrappedBuffer(content != null ? content
                     .getBytes() : new byte[0]));
             response.headers().set(CONTENT_TYPE, "text/html");
             response.headers().set(CONTENT_LENGTH,

@@ -74,7 +74,7 @@
     </appender>
 
     <!-- root 默认日志配置 -->
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="DATA" />
         <appender-ref ref="DATA_ERROR" />
