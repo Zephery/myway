@@ -8,9 +8,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.HttpRequestDecoder;
-import io.netty.handler.codec.http.HttpResponseEncoder;
-import io.netty.handler.codec.http.HttpServerCodec;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -22,10 +20,9 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 public class HttpServer {
     public void start(int port) throws Exception {
         EventLoopGroup bossGroup = new NioEventLoopGroup();
-        EventLoopGroup workerGroup = new NioEventLoopGroup();
         try {
             ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
+            b.group(bossGroup)
                     .handler(new LoggingHandler(LogLevel.DEBUG))
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
@@ -42,6 +39,8 @@ public class HttpServer {
                             ch.pipeline().addLast(
                                     new HttpServerHandler());
                             ch.pipeline().addLast(new ChunkedWriteHandler());
+                            ch.pipeline().addLast("aggregator", new HttpObjectAggregator(10 * 1024 * 1024));
+                            ch.pipeline().addLast("compressor", new HttpContentCompressor());
                             ch.pipeline().addLast(new HttpServerCodec());
                         }
                     }).option(ChannelOption.SO_BACKLOG, 128)
@@ -50,7 +49,6 @@ public class HttpServer {
 
             f.channel().closeFuture().sync();
         } finally {
-            workerGroup.shutdownGracefully();
             bossGroup.shutdownGracefully();
         }
     }
