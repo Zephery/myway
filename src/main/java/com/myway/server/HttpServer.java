@@ -55,6 +55,6 @@ public class HttpServer {
 
     public static void main(String[] args) throws Exception {
         HttpServer server = new HttpServer();
-        server.start(80);
+        server.start(82);
     }
 }

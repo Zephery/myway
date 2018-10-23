@@ -1,21 +1,12 @@
 package com.myway.server;
 
-import com.myway.common.ByteBufToBytes;
-import com.myway.common.RedisUtil;
+import com.myway.service.MyWebSite;
+import com.myway.service.SkyWalking;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
 import lombok.extern.slf4j.Slf4j;
-import redis.clients.jedis.Jedis;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -26,58 +17,25 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * @since 2018/9/4 22:53
  */
 @Slf4j
-public class HttpServerHandler extends ChannelInboundHandlerAdapter {
-
-    private RedisUtil redisUtil = new RedisUtil();
-    private ByteBufToBytes reader;
+public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg)
+    public void channelRead0(ChannelHandlerContext ctx, Object msg)
             throws Exception {
         if (msg instanceof HttpRequest) {
             DefaultHttpRequest request = (DefaultHttpRequest) msg;
-            String uri = request.uri();
-            if ("/favicon.ico".equals(uri)) {
-                return;
+            String host = request.headers().get("host");
+            String prefix = host.split("\\.")[0];
+            String content;
+            switch (prefix) {
+                case "sky":
+                    SkyWalking skyWalking = new SkyWalking();
+                    content = skyWalking.getPage(request.uri());
+                    break;
+                default:
+                    MyWebSite myWebSite = new MyWebSite();
+                    content = myWebSite.getPage(request.uri());
             }
-            if (HttpUtil.isContentLengthSet(request)) {
-                reader = new ByteBufToBytes(
-                        (int) HttpUtil.getContentLength(request));
-            }
-            log.info(new Date().toString());
-            Jedis jedis = redisUtil.getJedis();
-            String content = jedis.get(uri);
-            if (content == null || content.length() == 0) {
-                try {
-                    URL url = new URL("http://119.29.188.224:8080" + uri);
-                    log.info(url.toString());
-                    URLConnection urlConnection = url.openConnection();
-                    HttpURLConnection connection = (HttpURLConnection) urlConnection;
-                    connection.setRequestMethod("GET");
-                    //连接
-                    connection.connect();
-                    //得到响应码
-                    int responseCode = connection.getResponseCode();
-                    if (responseCode == HttpURLConnection.HTTP_OK) {
-                        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader
-                                (connection.getInputStream(), StandardCharsets.UTF_8));
-                        StringBuilder bs = new StringBuilder();
-                        String l;
-                        while ((l = bufferedReader.readLine()) != null) {
-                            bs.append(l).append("\n");
-                        }
-                        content = bs.toString();
-                    }
-                    if (content != null && !content.isEmpty()) {
-                        jedis.set(uri, content);
-                    }
-                    connection.disconnect();
-                } catch (Exception e) {
-                    log.error("", e);
-                    return;
-                }
-            }
-            jedis.close();
             FullHttpResponse response = new DefaultFullHttpResponse(
                     HTTP_1_1, OK, Unpooled.wrappedBuffer(content != null ? content
                     .getBytes() : new byte[0]));
@@ -85,12 +43,8 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
             response.headers().set(CONTENT_LENGTH,
                     response.content().readableBytes());
             response.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-//            response.headers().set(TRANSFER_ENCODING, CHUNKED);
-//            response.headers().set(VARY, ACCEPT_ENCODING);
             ctx.write(response);
             ctx.flush();
-        } else {
-            throw new Exception();
         }
     }
 
@@ -102,6 +56,7 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
             throws Exception {
+        log.error(cause.toString());
         ctx.close();
     }
 }
