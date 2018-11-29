@@ -33,22 +33,22 @@ func RemoteIp(req *http.Request) string {
 	}
 	return remoteAddr
 }
-func sayhelloName(w http.ResponseWriter, r *http.Request) {
+func sayHelloName(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	r.ParseForm() //解析参数，默认是不会解析的
 
 	content, flag := c.Get(r.RequestURI)
-	if (flag) {
+	if flag {
 		fmt.Fprint(w, content)
 	} else {
 		response, err := http.Get("http://119.29.188.224:8080" + r.RequestURI)
-		if (err != nil) {
-			fmt.Print("%s", err)
+		if err != nil {
+			fmt.Print(err)
 		} else {
 			defer response.Body.Close()
 			contents, err := ioutil.ReadAll(response.Body)
 			if err != nil {
-				log.Print("%s", err)
+				log.Print(err)
 				os.Exit(1)
 			}
 			c.Set(r.RequestURI, string(contents), cache.DefaultExpiration)
@@ -61,7 +61,7 @@ func sayhelloName(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/", sayhelloName)       //设置访问的路由
+	http.HandleFunc("/", sayHelloName)       //设置访问的路由
 	err := http.ListenAndServe(":9090", nil) //设置监听的端口
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

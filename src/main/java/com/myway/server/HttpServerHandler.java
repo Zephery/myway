@@ -39,7 +39,7 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<Object> {
             FullHttpResponse response = new DefaultFullHttpResponse(
                     HTTP_1_1, OK, Unpooled.wrappedBuffer(content != null ? content
                     .getBytes() : new byte[0]));
-            response.headers().set(CONTENT_TYPE, "text/html");
+            response.headers().set(CONTENT_TYPE, "image/png;charset=UTF-8");
             response.headers().set(CONTENT_LENGTH,
                     response.content().readableBytes());
             response.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
