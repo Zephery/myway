@@ -41,7 +41,7 @@ func sayHelloName(w http.ResponseWriter, r *http.Request) {
 	if flag {
 		fmt.Fprint(w, content)
 	} else {
-		response, err := http.Get("http://119.29.188.224:8080" + r.RequestURI)
+		response, err := http.Get("http://127.0.0.1:8080" + r.RequestURI)
 		if err != nil {
 			fmt.Print(err)
 		} else {
