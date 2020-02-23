@@ -37,11 +37,19 @@ func sayHelloName(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	r.ParseForm() //解析参数，默认是不会解析的
 
+	realIp := RemoteIp(r)
+
 	content, flag := c.Get(r.RequestURI)
 	if flag {
 		fmt.Fprint(w, content)
 	} else {
-		response, err := http.Get("http://127.0.0.1:8080" + r.RequestURI)
+		req, _ := http.NewRequest("GET", "http://127.0.0.1:8080"+r.RequestURI, nil)
+		// 比如说设置个token
+		req.Header.Set(XForwardedFor, realIp)
+
+		client := http.DefaultClient
+		response, err := client.Do(req)
+
 		if err != nil {
 			fmt.Print(err)
 		} else {
@@ -56,12 +64,12 @@ func sayHelloName(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Print(RemoteIp(r) + " 访问了 " + r.RequestURI + " 耗时：")
+	fmt.Print(realIp + " 访问了 " + r.RequestURI + " 耗时：")
 	fmt.Println(time.Now().Sub(start))
 }
 
 func main() {
-	http.HandleFunc("/", sayHelloName)       //设置访问的路由
+	http.HandleFunc("/", sayHelloName)     //设置访问的路由
 	err := http.ListenAndServe(":80", nil) //设置监听的端口
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
