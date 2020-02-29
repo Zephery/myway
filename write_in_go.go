@@ -63,8 +63,9 @@ func sayHelloName(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, string(contents))
 		}
 	}
-
-	fmt.Print(realIp + " 访问了 " + r.RequestURI + " 耗时：")
+	t := time.Now()
+	format := t.Format("2006-01-02 15:04:05")
+	fmt.Print(format + " " + realIp + " 访问了 " + r.RequestURI + " 耗时：")
 	fmt.Println(time.Now().Sub(start))
 }
 
